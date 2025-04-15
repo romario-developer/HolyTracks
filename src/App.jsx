@@ -5,6 +5,7 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import Header from './components/common/Header';
 import AppRoutes from './routes';
 import { SongProvider } from './context/SongContext';
+import { AuthProvider } from './context/AuthContext';
 
 // Tema personalizado
 const theme = createTheme({
@@ -39,16 +40,18 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <SongProvider>
-        <BrowserRouter>
-          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-            <Header />
-            <main style={{ flex: 1 }}>
-              <AppRoutes />
-            </main>
-          </div>
-        </BrowserRouter>
-      </SongProvider>
+      <AuthProvider>
+        <SongProvider>
+          <BrowserRouter>
+            <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+              <Header />
+              <main style={{ flex: 1 }}>
+                <AppRoutes />
+              </main>
+            </div>
+          </BrowserRouter>
+        </SongProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 };
