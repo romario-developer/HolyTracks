@@ -1,4 +1,4 @@
-# App Missa
+# HolyTracks
 
 Aplicativo para gerenciamento de tracks de músicas para liturgia católica. Permite carregar arquivos separados por instrumento, definir marcações e organizar por tempo litúrgico.
 
