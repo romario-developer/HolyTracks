@@ -1,71 +1,134 @@
-import api from './api';
+// Song service for handling song-related API calls and operations
 
-// Obter todas as músicas do usuário
-export const getSongs = async (params = {}) => {
+// You might want to import axios or fetch for API calls
+// import axios from 'axios';
+
+// Example API base URL - replace with your actual API endpoint
+const API_URL = '/api/songs';
+
+// Get all songs - adding alias for getAllSongs to match the import in SongContext.js
+export const getSongs = async () => {
   try {
-    const response = await api.get('/songs', { params });
-    return response.data;
+    // Example implementation using fetch
+    const response = await fetch(API_URL);
+    if (!response.ok) {
+      throw new Error('Failed to fetch songs');
+    }
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error('Error fetching songs:', error);
+    throw error;
   }
 };
 
-// Obter uma música pelo ID
+// Keeping the original function for compatibility
+export const getAllSongs = getSongs;
+
+// Get a single song by ID
 export const getSongById = async (id) => {
   try {
-    const response = await api.get(`/songs/${id}`);
-    return response.data;
+    const response = await fetch(`${API_URL}/${id}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch song');
+    }
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error(`Error fetching song with ID ${id}:`, error);
+    throw error;
   }
 };
 
-// Criar uma nova música
+// Add a new song - adding alias for addSong to match the import in SongContext.js
 export const createSong = async (songData) => {
   try {
-    const response = await api.post('/songs', songData);
-    return response.data;
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(songData),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to add song');
+    }
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error('Error adding song:', error);
+    throw error;
   }
 };
 
-// Atualizar uma música existente
+// Keeping the original function for compatibility
+export const addSong = createSong;
+
+// Update an existing song
 export const updateSong = async (id, songData) => {
   try {
-    const response = await api.put(`/songs/${id}`, songData);
-    return response.data;
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(songData),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update song');
+    }
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error(`Error updating song with ID ${id}:`, error);
+    throw error;
   }
 };
 
-// Excluir uma música
+// Delete a song
 export const deleteSong = async (id) => {
   try {
-    const response = await api.delete(`/songs/${id}`);
-    return response.data;
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete song');
+    }
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error(`Error deleting song with ID ${id}:`, error);
+    throw error;
   }
 };
 
-// Adicionar um marcador à música
+// Add a marker to a song
 export const addMarker = async (songId, markerData) => {
   try {
-    const response = await api.post(`/songs/${songId}/markers`, markerData);
-    return response.data;
+    const response = await fetch(`${API_URL}/${songId}/markers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(markerData),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to add marker');
+    }
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error(`Error adding marker to song with ID ${songId}:`, error);
+    throw error;
   }
 };
 
-// Remover um marcador da música
+// Remove a marker from a song
 export const removeMarker = async (songId, markerId) => {
   try {
-    const response = await api.delete(`/songs/${songId}/markers/${markerId}`);
-    return response.data;
+    const response = await fetch(`${API_URL}/${songId}/markers/${markerId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to remove marker');
+    }
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error(`Error removing marker with ID ${markerId} from song with ID ${songId}:`, error);
+    throw error;
   }
 };

@@ -1,83 +1,164 @@
-import api from './api';
+// Upload service for handling file uploads
 
-// Upload de um único arquivo
-export const uploadTrack = async (file, songId, name, type) => {
+// You might want to import axios for API calls
+// import axios from 'axios';
+
+// Example API base URL - replace with your actual API endpoint
+const UPLOAD_API_URL = '/api/upload';
+
+// Upload a song file
+export const uploadSongFile = async (file, metadata = {}) => {
   try {
-    // Criar FormData para envio de arquivo
     const formData = new FormData();
     formData.append('file', file);
     
-    if (songId) {
-      formData.append('songId', songId);
+    // Add any metadata as needed
+    Object.keys(metadata).forEach(key => {
+      formData.append(key, metadata[key]);
+    });
+
+    const response = await fetch(UPLOAD_API_URL, {
+      method: 'POST',
+      body: formData,
+      // Don't set Content-Type header when using FormData
+      // It will be set automatically including the boundary
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload file');
     }
     
-    if (name) {
-      formData.append('name', name);
-    }
-    
-    if (type) {
-      formData.append('type', type);
-    }
-    
-    // Configurar headers especiais para upload de arquivo
-    const config = {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    };
-    
-    const response = await api.post('/upload', formData, config);
-    return response.data;
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error('Error uploading file:', error);
+    throw error;
   }
 };
 
-// Upload de múltiplos arquivos
-export const uploadMultipleTracks = async (files, songId) => {
+// Get upload progress (if your backend supports it)
+export const getUploadProgress = (uploadId) => {
+  return fetch(`${UPLOAD_API_URL}/progress/${uploadId}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to get upload progress');
+      }
+      return response.json();
+    })
+    .catch(error => {
+      console.error('Error getting upload progress:', error);
+      throw error;
+    });
+};
+
+// Cancel an ongoing upload (if your backend supports it)
+export const cancelUpload = async (uploadId) => {
   try {
-    // Criar FormData para envio de múltiplos arquivos
-    const formData = new FormData();
-    
-    // Adicionar cada arquivo ao FormData
-    Array.from(files).forEach(file => {
-      formData.append('files', file);
+    const response = await fetch(`${UPLOAD_API_URL}/cancel/${uploadId}`, {
+      method: 'POST',
     });
     
-    if (songId) {
-      formData.append('songId', songId);
+    if (!response.ok) {
+      throw new Error('Failed to cancel upload');
     }
     
-    // Configurar headers especiais para upload de arquivo
-    const config = {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    };
+    return await response.json();
+  } catch (error) {
+    console.error('Error canceling upload:', error);
+    throw error;
+  }
+};
+
+// Upload a single track
+export const uploadTrack = async (songId, file, trackInfo = {}) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('songId', songId);
     
-    const response = await api.post('/upload/multiple', formData, config);
-    return response.data;
+    // Add track info as needed
+    Object.keys(trackInfo).forEach(key => {
+      formData.append(key, trackInfo[key]);
+    });
+
+    const response = await fetch(`${UPLOAD_API_URL}/track`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload track');
+    }
+    
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error('Error uploading track:', error);
+    throw error;
   }
 };
 
-// Excluir um arquivo
-export const deleteTrack = async (trackId) => {
+// Upload multiple tracks at once
+export const uploadMultipleTracks = async (songId, files, tracksInfo = []) => {
   try {
-    const response = await api.delete(`/upload/${trackId}`);
-    return response.data;
+    const formData = new FormData();
+    formData.append('songId', songId);
+    
+    // Append each file
+    files.forEach((file, index) => {
+      formData.append(`files[${index}]`, file);
+    });
+    
+    // Append track info if available
+    if (tracksInfo.length > 0) {
+      formData.append('tracksInfo', JSON.stringify(tracksInfo));
+    }
+
+    const response = await fetch(`${UPLOAD_API_URL}/tracks/multiple`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload multiple tracks');
+    }
+    
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error('Error uploading multiple tracks:', error);
+    throw error;
   }
 };
 
-// Obter URL para download
-export const getDownloadUrl = async (trackId) => {
+// Delete a track
+export const deleteTrack = async (songId, trackId) => {
   try {
-    const response = await api.get(`/upload/${trackId}/download`);
-    return response.data.url;
+    const response = await fetch(`${UPLOAD_API_URL}/track/${songId}/${trackId}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to delete track');
+    }
+    
+    return await response.json();
   } catch (error) {
-    throw error.response ? error.response.data : new Error('Erro no servidor');
+    console.error('Error deleting track:', error);
+    throw error;
+  }
+};
+
+// Get download URL for a track
+export const getDownloadUrl = async (songId, trackId) => {
+  try {
+    const response = await fetch(`${UPLOAD_API_URL}/download/${songId}/${trackId}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to get download URL');
+    }
+    
+    const data = await response.json();
+    return data.downloadUrl;
+  } catch (error) {
+    console.error('Error getting download URL:', error);
+    throw error;
   }
 };
