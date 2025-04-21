@@ -8,6 +8,8 @@ import {
   Button, 
   ToggleButton, 
   ToggleButtonGroup,
+  Alert,
+  CircularProgress,
   styled 
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
@@ -45,8 +47,18 @@ const IconWrapper = styled(Box)(({ theme }) => ({
 
 const UploadPage = () => {
   const navigate = useNavigate();
-  const { uploadComplete, uploadProgress } = useSongContext();
+  const { 
+    uploadProgress, 
+    uploadComplete, 
+    uploadMultipleSongTracks, 
+    saveSong, 
+    error 
+  } = useSongContext();
+  
   const [uploadType, setUploadType] = useState('personal');
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [songId, setSongId] = useState(null);
 
   // Mudar tipo de upload
   const handleUploadTypeChange = (event, newType) => {
@@ -55,9 +67,49 @@ const UploadPage = () => {
     }
   };
 
-  // Navegar para a próxima página
+  // Função chamada quando arquivos são selecionados
+  const handleFilesSelected = (selectedFiles) => {
+    setFiles(selectedFiles);
+  };
+
+  // Iniciar o processo de upload
+  const handleUpload = async () => {
+    try {
+      setUploading(true);
+      
+      // Primeiro, criar uma música nova no backend
+      const songData = {
+        title: 'Nova Música', // Nome temporário, será editado na próxima etapa
+        key: 'C',
+        bpm: 120,
+        timeSignature: '4/4',
+        tempo: 'comum',
+        notes: '',
+        isPublic: uploadType === 'share'
+      };
+      
+      // Salvar a música e obter o ID
+      const savedSong = await saveSong(songData);
+      const newSongId = savedSong._id;
+      setSongId(newSongId);
+      
+      // Fazer upload das tracks vinculadas à nova música
+      await uploadMultipleSongTracks(files, newSongId);
+      
+      setUploading(false);
+    } catch (err) {
+      console.error('Erro no processo de upload:', err);
+      setUploading(false);
+    }
+  };
+
+  // Navegar para a próxima página quando o upload estiver completo
   const handleContinue = () => {
-    navigate('/configure');
+    if (songId) {
+      navigate(`/configure?songId=${songId}`);
+    } else {
+      navigate('/configure');
+    }
   };
 
   return (
@@ -66,6 +118,12 @@ const UploadPage = () => {
         <Typography variant="h4" align="center" gutterBottom>
           Carregar nova música
         </Typography>
+        
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
         
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <ToggleButtonGroup
@@ -94,23 +152,45 @@ const UploadPage = () => {
           </ToggleButtonGroup>
         </Box>
         
-        <UploadArea />
+        <UploadArea onFilesSelected={handleFilesSelected} />
         
-        {uploadProgress > 0 && (
+        {(uploadProgress > 0 || uploading) && (
           <Box sx={{ mt: 3 }}>
             <ProgressBar />
           </Box>
         )}
         
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <Button 
-            variant="contained" 
-            size="large"
-            disabled={!uploadComplete}
-            onClick={handleContinue}
-          >
-            Continuar
-          </Button>
+          {!uploadComplete && files.length > 0 && !uploading && (
+            <Button 
+              variant="contained" 
+              size="large"
+              onClick={handleUpload}
+            >
+              Iniciar Upload
+            </Button>
+          )}
+          
+          {uploading && (
+            <Button 
+              variant="contained" 
+              size="large"
+              disabled
+              startIcon={<CircularProgress size={20} color="inherit" />}
+            >
+              Enviando...
+            </Button>
+          )}
+          
+          {uploadComplete && (
+            <Button 
+              variant="contained" 
+              size="large"
+              onClick={handleContinue}
+            >
+              Continuar
+            </Button>
+          )}
         </Box>
       </UploadContainer>
     </Container>

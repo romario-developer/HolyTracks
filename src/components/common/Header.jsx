@@ -161,9 +161,9 @@ const Header = () => {
                   anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                 >
                   <Box sx={{ px: 2, py: 1, textAlign: 'center' }}>
-                    <Typography variant="subtitle1">{currentUser.name}</Typography>
+                    <Typography variant="subtitle1">{currentUser?.name}</Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {currentUser.email}
+                      {currentUser?.email}
                     </Typography>
                   </Box>
                   

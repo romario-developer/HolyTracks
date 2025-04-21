@@ -15,31 +15,7 @@ const ProgressInfo = styled(Box)(({ theme }) => ({
 }));
 
 const ProgressBar = () => {
-  const { uploadProgress, audioFiles } = useSongContext();
-  
-  // Calcular tamanho total dos arquivos
-  const calculateTotalSize = () => {
-    if (!audioFiles.length) return '0 MB';
-    
-    const totalBytes = audioFiles.reduce((acc, file) => acc + file.size, 0);
-    return formatFileSize(totalBytes);
-  };
-  
-  // Calcular tamanho enviado
-  const calculateUploadedSize = () => {
-    if (!audioFiles.length) return '0 MB';
-    
-    const totalBytes = audioFiles.reduce((acc, file) => acc + file.size, 0);
-    const uploadedBytes = totalBytes * (uploadProgress / 100);
-    return formatFileSize(uploadedBytes);
-  };
-  
-  // Formatar tamanho de arquivo
-  const formatFileSize = (bytes) => {
-    if (bytes < 1024) return bytes + ' bytes';
-    else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-    else return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-  };
+  const { uploadProgress } = useSongContext();
   
   return (
     <ProgressContainer>
@@ -54,8 +30,10 @@ const ProgressBar = () => {
       />
       
       <ProgressInfo>
-        <Typography variant="body2">{calculateUploadedSize()}</Typography>
-        <Typography variant="body2">/ {calculateTotalSize()}</Typography>
+        <Typography variant="body2">
+          {uploadProgress < 100 ? 'Enviando arquivos...' : 'Upload completo!'}
+        </Typography>
+        <Typography variant="body2">{uploadProgress}%</Typography>
       </ProgressInfo>
     </ProgressContainer>
   );

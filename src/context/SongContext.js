@@ -1,4 +1,19 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  getSongs, 
+  getSongById, 
+  createSong, 
+  updateSong, 
+  deleteSong,
+  addMarker,
+  removeMarker
+} from '../services/songService';
+import { 
+  uploadTrack, 
+  uploadMultipleTracks, 
+  deleteTrack, 
+  getDownloadUrl 
+} from '../services/uploadService';
 
 // Criando o contexto
 const SongContext = createContext();
@@ -19,83 +34,292 @@ export const SongProvider = ({ children }) => {
     tracks: []
   });
 
-  // Estado para armazenar os arquivos de áudio
-  const [audioFiles, setAudioFiles] = useState([]);
+  // Estado para armazenar todas as músicas do usuário
+  const [userSongs, setUserSongs] = useState([]);
 
   // Estado para controlar o fluxo de upload
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Carregar músicas do usuário quando o componente montar
+  useEffect(() => {
+    loadUserSongs();
+  }, []);
+
+  // Função para carregar todas as músicas do usuário
+  const loadUserSongs = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await getSongs();
+      setUserSongs(response.data || []);
+    } catch (err) {
+      setError(err.message || 'Erro ao carregar músicas');
+      console.error('Erro ao carregar músicas:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para carregar uma música específica
+  const loadSong = async (songId) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await getSongById(songId);
+      setCurrentSong(response.data || {});
+      return response.data;
+    } catch (err) {
+      setError(err.message || 'Erro ao carregar música');
+      console.error('Erro ao carregar música:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Função para atualizar dados da música
-  const updateSongData = (data) => {
-    setCurrentSong(prev => ({ ...prev, ...data }));
+  const updateSongData = async (songId, data) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await updateSong(songId, data);
+      setCurrentSong(response.data);
+      
+      // Atualizar a lista de músicas do usuário
+      await loadUserSongs();
+      
+      return response.data;
+    } catch (err) {
+      setError(err.message || 'Erro ao atualizar música');
+      console.error('Erro ao atualizar música:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Função para adicionar tracks
-  const addTracks = (tracks) => {
-    setCurrentSong(prev => ({
-      ...prev,
-      tracks: [...prev.tracks, ...tracks]
-    }));
+  // Função para criar uma nova música
+  const saveSong = async (songData) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await createSong(songData);
+      
+      // Atualizar a lista de músicas do usuário
+      await loadUserSongs();
+      
+      return response.data;
+    } catch (err) {
+      setError(err.message || 'Erro ao salvar música');
+      console.error('Erro ao salvar música:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Função para atualizar uma track específica
-  const updateTrack = (index, trackData) => {
-    const updatedTracks = [...currentSong.tracks];
-    updatedTracks[index] = { ...updatedTracks[index], ...trackData };
-    
-    setCurrentSong(prev => ({
-      ...prev,
-      tracks: updatedTracks
-    }));
-  };
-
-  // Função para simular o upload
-  const simulateUpload = (files) => {
-    setAudioFiles(files);
-    setUploadProgress(0);
-    
-    // Simulação do progresso de upload
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setUploadComplete(true);
-          return 100;
-        }
-        return prev + 5;
-      });
-    }, 200);
-  };
-
-  // Função para salvar o projeto
-  const saveSong = async () => {
-    // Aqui seria implementada a lógica para salvar no backend
-    console.log('Salvando música:', currentSong);
-    
-    // Simulação de salvamento bem-sucedido
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          songId: 'song_' + Date.now(),
-          message: 'Música salva com sucesso!'
+  // Função para excluir uma música
+  const removeSong = async (songId) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await deleteSong(songId);
+      
+      // Atualizar a lista de músicas do usuário
+      await loadUserSongs();
+      
+      // Se a música atual for a excluída, limpar o estado
+      if (currentSong._id === songId) {
+        setCurrentSong({
+          title: '',
+          key: '',
+          bpm: '',
+          timeSignature: '',
+          tempo: '',
+          notes: '',
+          tracks: []
         });
-      }, 1500);
-    });
+      }
+      
+      return true;
+    } catch (err) {
+      setError(err.message || 'Erro ao excluir música');
+      console.error('Erro ao excluir música:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para adicionar um marcador
+  const addSongMarker = async (songId, markerData) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await addMarker(songId, markerData);
+      
+      // Atualizar música atual se for a mesma
+      if (currentSong._id === songId) {
+        setCurrentSong(response.data);
+      }
+      
+      return response.data;
+    } catch (err) {
+      setError(err.message || 'Erro ao adicionar marcador');
+      console.error('Erro ao adicionar marcador:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para remover um marcador
+  const removeSongMarker = async (songId, markerId) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await removeMarker(songId, markerId);
+      
+      // Atualizar música atual se for a mesma
+      if (currentSong._id === songId) {
+        setCurrentSong(response.data);
+      }
+      
+      return response.data;
+    } catch (err) {
+      setError(err.message || 'Erro ao remover marcador');
+      console.error('Erro ao remover marcador:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para fazer upload de uma track
+  const uploadSongTrack = async (file, songId, name, type) => {
+    try {
+      setUploadProgress(0);
+      setUploadComplete(false);
+      setError(null);
+      
+      // Configurar para monitorar o progresso do upload
+      const onUploadProgress = (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        setUploadProgress(percentCompleted);
+      };
+      
+      // Adicionar opção de progresso ao objeto config
+      const config = { onUploadProgress };
+      
+      const response = await uploadTrack(file, songId, name, type, config);
+      setUploadComplete(true);
+      
+      // Se a música atual for a que recebeu a nova track, atualizar
+      if (currentSong._id === songId) {
+        await loadSong(songId);
+      }
+      
+      return response.data;
+    } catch (err) {
+      setError(err.message || 'Erro ao fazer upload');
+      console.error('Erro ao fazer upload:', err);
+      throw err;
+    }
+  };
+
+  // Função para fazer upload de múltiplas tracks
+  const uploadMultipleSongTracks = async (files, songId) => {
+    try {
+      setUploadProgress(0);
+      setUploadComplete(false);
+      setError(null);
+      
+      // Configurar para monitorar o progresso do upload
+      const onUploadProgress = (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        setUploadProgress(percentCompleted);
+      };
+      
+      // Adicionar opção de progresso ao objeto config
+      const config = { onUploadProgress };
+      
+      const response = await uploadMultipleTracks(files, songId, config);
+      setUploadComplete(true);
+      
+      // Se a música atual for a que recebeu as novas tracks, atualizar
+      if (currentSong._id === songId) {
+        await loadSong(songId);
+      }
+      
+      return response.data;
+    } catch (err) {
+      setError(err.message || 'Erro ao fazer upload múltiplo');
+      console.error('Erro ao fazer upload múltiplo:', err);
+      throw err;
+    }
+  };
+
+  // Função para excluir uma track
+  const removeTrack = async (trackId, songId) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await deleteTrack(trackId);
+      
+      // Se a música atual for a que teve uma track removida, atualizar
+      if (songId && currentSong._id === songId) {
+        await loadSong(songId);
+      }
+      
+      return true;
+    } catch (err) {
+      setError(err.message || 'Erro ao excluir track');
+      console.error('Erro ao excluir track:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Função para obter URL de download de uma track
+  const getTrackDownloadUrl = async (trackId) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const url = await getDownloadUrl(trackId);
+      return url;
+    } catch (err) {
+      setError(err.message || 'Erro ao obter URL de download');
+      console.error('Erro ao obter URL de download:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Valores e funções disponibilizados pelo contexto
   const value = {
     currentSong,
-    audioFiles,
+    userSongs,
     uploadProgress,
     uploadComplete,
+    isLoading,
+    error,
+    loadUserSongs,
+    loadSong,
     updateSongData,
-    addTracks,
-    updateTrack,
-    simulateUpload,
     saveSong,
+    removeSong,
+    addSongMarker,
+    removeSongMarker,
+    uploadSongTrack,
+    uploadMultipleSongTracks,
+    removeTrack,
+    getTrackDownloadUrl,
+    setCurrentSong,
     setUploadComplete
   };
 

@@ -1,8 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Box, Typography, Paper, styled } from '@mui/material';
+import { Box, Typography, Paper, Alert, styled } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { useSongContext } from '../../context/SongContext';
 
 // Estilização personalizada
 const UploadPaper = styled(Paper)(({ theme, isDragActive }) => ({
@@ -25,8 +24,25 @@ const IconContainer = styled(Box)({
   marginBottom: 15
 });
 
-const UploadArea = () => {
-  const { simulateUpload } = useSongContext();
+const FileList = styled(Box)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+  textAlign: 'left',
+  maxHeight: '200px',
+  overflowY: 'auto'
+}));
+
+const FileItem = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(1),
+  marginBottom: theme.spacing(0.5),
+  borderRadius: theme.spacing(0.5),
+  backgroundColor: theme.palette.grey[100],
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center'
+}));
+
+const UploadArea = ({ onFilesSelected }) => {
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploadError, setUploadError] = useState(null);
 
   // Função chamada quando os arquivos são soltos ou selecionados
@@ -37,9 +53,9 @@ const UploadArea = () => {
     }
 
     // Verificar tipos de arquivo
-    const validTypes = ['audio/mpeg', 'audio/wav', 'application/zip'];
+    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/mp4', 'application/zip'];
     const allValid = acceptedFiles.every(file => 
-      validTypes.includes(file.type) || file.name.endsWith('.zip')
+      validTypes.includes(file.type) || file.name.endsWith('.zip') || file.name.endsWith('.mp3') || file.name.endsWith('.wav')
     );
 
     if (!allValid) {
@@ -48,16 +64,29 @@ const UploadArea = () => {
     }
 
     setUploadError(null);
-    simulateUpload(acceptedFiles);
-  }, [simulateUpload]);
+    setSelectedFiles(acceptedFiles);
+    
+    // Notificar componente pai sobre os arquivos selecionados
+    if (onFilesSelected) {
+      onFilesSelected(acceptedFiles);
+    }
+  }, [onFilesSelected]);
+
+  // Formatação do tamanho do arquivo
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' bytes';
+    else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    else return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
 
   // Configuração do react-dropzone
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'audio/*': ['.mp3', '.wav'],
+      'audio/*': ['.mp3', '.wav', '.m4a'],
       'application/zip': ['.zip']
-    }
+    },
+    maxSize: 100 * 1024 * 1024, // 100MB max
   });
 
   return (
@@ -79,13 +108,30 @@ const UploadArea = () => {
         <Typography variant="body2" color="text.secondary" sx={{ mt: 3 }}>
           Todos os arquivos dentro de um ZIP deve ser arquivos de áudio (MP3, WAV ou mp4).
         </Typography>
-        
-        {uploadError && (
-          <Typography variant="body2" color="error" sx={{ mt: 2 }}>
-            {uploadError}
-          </Typography>
-        )}
       </UploadPaper>
+      
+      {uploadError && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {uploadError}
+        </Alert>
+      )}
+      
+      {selectedFiles.length > 0 && (
+        <FileList>
+          <Typography variant="subtitle2" gutterBottom>
+            Arquivos selecionados:
+          </Typography>
+          
+          {selectedFiles.map((file, index) => (
+            <FileItem key={index}>
+              <Typography variant="body2">{file.name}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {formatFileSize(file.size)}
+              </Typography>
+            </FileItem>
+          ))}
+        </FileList>
+      )}
     </Box>
   );
 };

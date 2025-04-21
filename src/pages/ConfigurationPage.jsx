@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -9,6 +9,8 @@ import {
   Step,
   StepLabel,
   Button,
+  CircularProgress,
+  Alert,
   styled
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -42,7 +44,27 @@ const steps = [
 
 const ConfigurationPage = () => {
   const navigate = useNavigate();
-  const { currentSong } = useSongContext();
+  const location = useLocation();
+  const { 
+    currentSong, 
+    loadSong, 
+    updateSongData, 
+    isLoading,
+    error
+  } = useSongContext();
+  
+  const [songId, setSongId] = useState(null);
+  
+  // Extrair ID da música da query string
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('songId');
+    
+    if (id) {
+      setSongId(id);
+      loadSong(id).catch(err => console.error('Erro ao carregar música:', err));
+    }
+  }, [location.search, loadSong]);
   
   // Verificar se todos os campos obrigatórios estão preenchidos
   const isFormValid = () => {
@@ -61,10 +83,18 @@ const ConfigurationPage = () => {
   };
   
   // Avançar para a página de finalização
-  const handleContinue = () => {
-    // Aqui seria implementada a lógica para salvar os dados no backend
-    // Por enquanto, apenas navegamos para a próxima página
-    navigate('/finalize');
+  const handleContinue = async () => {
+    try {
+      if (songId) {
+        // Salvar as alterações antes de continuar
+        await updateSongData(songId, currentSong);
+      }
+      
+      // Redirecionar para a página de finalização com o ID da música
+      navigate(`/finalize?songId=${songId}`);
+    } catch (err) {
+      console.error('Erro ao salvar configurações:', err);
+    }
   };
   
   return (
@@ -82,28 +112,42 @@ const ConfigurationPage = () => {
           Configurar sua música
         </Typography>
         
-        <SongForm />
+        {error && (
+          <Alert severity="error" sx={{ my: 2 }}>
+            {error}
+          </Alert>
+        )}
         
-        <TrackList />
-        
-        <ButtonContainer>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={handleBack}
-          >
-            Voltar
-          </Button>
-          
-          <Button
-            variant="contained"
-            endIcon={<ArrowForwardIcon />}
-            onClick={handleContinue}
-            disabled={!isFormValid()}
-          >
-            Continuar
-          </Button>
-        </ButtonContainer>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <SongForm />
+            
+            <TrackList songId={songId} />
+            
+            <ButtonContainer>
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+                onClick={handleBack}
+              >
+                Voltar
+              </Button>
+              
+              <Button
+                variant="contained"
+                endIcon={<ArrowForwardIcon />}
+                onClick={handleContinue}
+                disabled={!isFormValid() || !songId}
+              >
+                Continuar
+              </Button>
+            </ButtonContainer>
+          </>
+        )}
       </ConfigContainer>
     </Container>
   );
