@@ -14,6 +14,7 @@ import {
   deleteTrack, 
   getDownloadUrl 
 } from '../services/uploadService';
+import { toast } from 'react-toastify'; // Adicione esta biblioteca para notificações
 
 // Criando o contexto
 const SongContext = createContext();
@@ -56,8 +57,10 @@ export const SongProvider = ({ children }) => {
       const response = await getSongs();
       setUserSongs(response.data || []);
     } catch (err) {
-      setError(err.message || 'Erro ao carregar músicas');
+      const errorMsg = err.message || 'Erro ao carregar músicas';
+      setError(errorMsg);
       console.error('Erro ao carregar músicas:', err);
+      toast.error(errorMsg); // Notificação para o usuário
     } finally {
       setIsLoading(false);
     }
@@ -72,8 +75,10 @@ export const SongProvider = ({ children }) => {
       setCurrentSong(response.data || {});
       return response.data;
     } catch (err) {
-      setError(err.message || 'Erro ao carregar música');
+      const errorMsg = err.response?.data?.message || err.message || 'Erro ao carregar música';
+      setError(errorMsg);
       console.error('Erro ao carregar música:', err);
+      toast.error(errorMsg); // Notificação para o usuário
       throw err;
     } finally {
       setIsLoading(false);
@@ -91,10 +96,13 @@ export const SongProvider = ({ children }) => {
       // Atualizar a lista de músicas do usuário
       await loadUserSongs();
       
+      toast.success('Música atualizada com sucesso!'); // Feedback positivo
       return response.data;
     } catch (err) {
-      setError(err.message || 'Erro ao atualizar música');
+      const errorMsg = err.response?.data?.message || err.message || 'Erro ao atualizar música';
+      setError(errorMsg);
       console.error('Erro ao atualizar música:', err);
+      toast.error(errorMsg); // Notificação para o usuário
       throw err;
     } finally {
       setIsLoading(false);
@@ -102,20 +110,32 @@ export const SongProvider = ({ children }) => {
   };
 
   // Função para criar uma nova música
-  const saveSong = async (songData) => {
+  const saveSong = async (songData = currentSong) => {
     try {
       setIsLoading(true);
       setError(null);
+      
+      // Validação básica dos dados
+      if (!songData.title) {
+        const errorMsg = 'O título da música é obrigatório';
+        setError(errorMsg);
+        toast.error(errorMsg);
+        return { success: false, message: errorMsg };
+      }
+      
       const response = await createSong(songData);
       
       // Atualizar a lista de músicas do usuário
       await loadUserSongs();
       
-      return response.data;
+      toast.success('Música salva com sucesso!'); // Feedback positivo
+      return { success: true, data: response.data };
     } catch (err) {
-      setError(err.message || 'Erro ao salvar música');
+      const errorMsg = err.response?.data?.message || err.message || 'Erro ao salvar música';
+      setError(errorMsg);
       console.error('Erro ao salvar música:', err);
-      throw err;
+      toast.error(errorMsg); // Notificação para o usuário
+      return { success: false, message: errorMsg };
     } finally {
       setIsLoading(false);
     }

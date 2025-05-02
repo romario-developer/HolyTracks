@@ -18,68 +18,17 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Rotas públicas */}
+      {/* Todas as rotas são públicas agora */}
       <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      
-      {/* Rotas protegidas (requerem autenticação) */}
-      <Route 
-        path="/profile" 
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/upload" 
-        element={
-          <ProtectedRoute>
-            <UploadPage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/configure" 
-        element={
-          <ProtectedRoute>
-            <ConfigurationPage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/finalize" 
-        element={
-          <ProtectedRoute>
-            <FinalizationPage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/player/:songId" 
-        element={
-          <ProtectedRoute>
-            <PlayerPage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/player" 
-        element={
-          <ProtectedRoute>
-            <PlayerPage />
-          </ProtectedRoute>
-        } 
-      />
-      <Route 
-        path="/library" 
-        element={
-          <ProtectedRoute>
-            <LibraryPage />
-          </ProtectedRoute>
-        } 
-      />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/upload" element={<UploadPage />} />
+      <Route path="/configure" element={<ConfigurationPage />} />
+      <Route path="/finalize" element={<FinalizationPage />} />
+      <Route path="/player/:songId" element={<PlayerPage />} />
+      <Route path="/player" element={<PlayerPage />} />
+      <Route path="/library" element={<LibraryPage />} />
       
       {/* Rota de fallback para qualquer rota não encontrada */}
       <Route path="*" element={<Navigate to="/" replace />} />

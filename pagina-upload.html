@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload de Músicas - App Missa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #2196F3;
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .logo {
+            max-width: 150px;
+            margin: 0 auto;
+            display: block;
+        }
+        .nav {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+        .upload-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .upload-options {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        .upload-option {
+            padding: 20px;
+            margin: 0 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 180px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .upload-option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .upload-option.active {
+            border: 2px solid #2196F3;
+        }
+        .upload-option-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 60px 20px;
+            margin: 20px 0;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #2196F3;
+        }
+        .upload-icon {
+            font-size: 50px;
+            color: #ccc;
+            margin-bottom: 15px;
+        }
+        .upload-text {
+            margin-bottom: 20px;
+        }
+        .upload-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 30px;
+        }
+        .progress-container {
+            margin-top: 20px;
+        }
+        .progress-bar {
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #2196F3;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #666;
+        }
+        .btn-continue {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 30px;
+            transition: background-color 0.3s;
+        }
+        .btn-continue:hover {
+            background-color: #1976D2;
+        }
+        .btn-continue:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #fileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div style="text-align: center;">
+                <h1>App Missa</h1>
+            </div>
+            <div class="nav">
+                <a href="#">Início</a>
+                <a href="#">Minhas Músicas</a>
+                <a href="#">Upload</a>
+                <a href="#">Ajuda</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="upload-container">
+            <h1>Carregar nova música</h1>
+            
+            <div class="upload-options">
+                <div class="upload-option active" id="option-personal">
+                    <div class="upload-option-icon">👤</div>
+                    <div>Uso pessoal</div>
+                </div>
+                <div class="upload-option" id="option-share">
+                    <div class="upload-option-icon">🏷️</div>
+                    <div>Compartilhar</div>
+                </div>
+            </div>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">☁️</div>
+                <div class="upload-text">
+                    <strong>Arraste o arquivo na tela</strong>
+                    <div>ou clique aqui para procurar seu arquivo</div>
+                </div>
+                <div class="upload-info">
+                    Todos os arquivos dentro de um ZIP deve ser arquivos de áudio (MP3, WAV ou mp4).
+                </div>
+                <input type="file" id="fileInput" accept=".zip,.mp3,.wav" multiple>
+            </div>
+            
+            <div class="progress-container" style="display: none;" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar"></div>
+                </div>
+                <div class="progress-info">
+                    <span id="uploadedSize">0 MB</span>
+                    <span id="totalSize">/ 0 MB</span>
+                </div>
+            </div>
+            
+            <button class="btn-continue" id="btnContinue" disabled>Continuar</button>
+        </div>
+    </div>
+
+    <script>
+        // Selecionar elementos do DOM
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const uploadedSize = document.getElementById('uploadedSize');
+        const totalSize = document.getElementById('totalSize');
+        const btnContinue = document.getElementById('btnContinue');
+        const optionPersonal = document.getElementById('option-personal');
+        const optionShare = document.getElementById('option-share');
+        
+        // Opções de upload
+        optionPersonal.addEventListener('click', function() {
+            optionPersonal.classList.add('active');
+            optionShare.classList.remove('active');
+        });
+        
+        optionShare.addEventListener('click', function() {
+            optionShare.classList.add('active');
+            optionPersonal.classList.remove('active');
+        });
+        
+        // Clique na área de upload abre o seletor de arquivos
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        // Prevenir comportamento padrão para arrastar e soltar
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        // Destacar a área de upload quando arrastar um arquivo sobre ela
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            uploadArea.style.borderColor = '#2196F3';
+            uploadArea.style.backgroundColor = 'rgba(33, 150, 243, 0.05)';
+        }
+        
+        function unhighlight() {
+            uploadArea.style.borderColor = '#ccc';
+            uploadArea.style.backgroundColor = 'transparent';
+        }
+        
+        // Lidar com arquivos soltos na área de upload
+        uploadArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+        
+        // Lidar com seleção de arquivos pelo input
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+        
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            // Exibir a barra de progresso
+            progressContainer.style.display = 'block';
+            
+            let totalBytes = 0;
+            for (let i = 0; i < files.length; i++) {
+                totalBytes += files[i].size;
+            }
+            
+            // Converter bytes para MB
+            const totalMB = (totalBytes / (1024 * 1024)).toFixed(2);
+            totalSize.textContent = `/ ${totalMB} MB`;
+            
+            // Simular upload
+            simulateUpload(totalBytes);
+            
+            // Listar os arquivos (em uma aplicação real, enviaria para o servidor)
+            console.log('Arquivos selecionados:');
+            for (let i = 0; i < files.length; i++) {
+                console.log(`- ${files[i].name} (${formatFileSize(files[i].size)})`);
+            }
+            
+            // Habilitar o botão continuar após o upload
+            setTimeout(() => {
+                btnContinue.disabled = false;
+            }, 2000);
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            else return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+        
+        function simulateUpload(totalBytes) {
+            let uploadedBytes = 0;
+            const increment = totalBytes / 100; // Simular 100 etapas
+            
+            const interval = setInterval(() => {
+                uploadedBytes += increment;
+                const percentage = (uploadedBytes / totalBytes) * 100;
+                
+                if (percentage >= 100) {
+                    clearInterval(interval);
+                    uploadedBytes = totalBytes;
+                }
+                
+                progressBar.style.width = percentage + '%';
+                uploadedSize.textContent = (uploadedBytes / (1024 * 1024)).toFixed(2) + ' MB';
+            }, 20);
+        }
+        
+        // Ação do botão continuar
+        btnContinue.addEventListener('click', function() {
+            // Em uma aplicação real, redirecionar para a próxima etapa
+            window.location.href = 'configuracao-musica.html';
+        });
+    </script>
+</body>
+</html>

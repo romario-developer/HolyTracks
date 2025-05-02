@@ -1,18 +1,17 @@
 import axios from 'axios';
-
-// Criar instância do axios com configurações base
+import { API_BASE_URL } from '../config/apiConfig';
+ 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Interceptor para adicionar token de autenticação
+// Interceptor para adicionar o token de autenticação em todas as requisições
 api.interceptors.request.use(
   (config) => {
-    // Obter token do localStorage
-    const token = localStorage.getItem('app_missa_token');
+    const token = localStorage.getItem('holytracks_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -23,17 +22,15 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para tratamento de erros
+// Interceptor para tratar erros de resposta
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Tratar erros de autenticação (401)
+    // Se o erro for 401 (Não autorizado), limpar o localStorage
     if (error.response && error.response.status === 401) {
-      // Limpar dados de autenticação
-      localStorage.removeItem('app_missa_token');
-      localStorage.removeItem('app_missa_user');
-      
-      // Redirecionar para login (se necessário)
+      localStorage.removeItem('holytracks_token');
+      localStorage.removeItem('holytracks_user');
+      // Redirecionar para a página de login, se necessário
       // window.location.href = '/login';
     }
     return Promise.reject(error);

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { 
@@ -7,17 +8,9 @@ import {
   Container, 
   Box,
   Button,
-  Avatar,
-  Menu,
-  MenuItem,
-  IconButton,
-  Divider,
-  ListItemIcon,
   styled
 } from '@mui/material';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import LogoutIcon from '@mui/icons-material/Logout';
-import PersonIcon from '@mui/icons-material/Person';
+// eslint-disable-next-line no-unused-vars
 import { useAuth } from '../../context/AuthContext';
 
 // Estilização personalizada
@@ -36,53 +29,9 @@ const NavButton = styled(Button)(({ theme }) => ({
   }
 }));
 
-const UserAvatar = styled(Avatar)(({ theme }) => ({
-  width: 36,
-  height: 36,
-  backgroundColor: theme.palette.secondary.main,
-  cursor: 'pointer',
-  '&:hover': {
-    opacity: 0.9
-  }
-}));
-
 const Header = () => {
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
-  const { currentUser, isAuthenticated, logout } = useAuth();
-  
-  // Estado para controlar o menu de usuário
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
-  
-  // Manipuladores para o menu de usuário
-  const handleOpenMenu = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  
-  const handleCloseMenu = () => {
-    setAnchorEl(null);
-  };
-  
-  // Manipulador de logout
-  const handleLogout = () => {
-    logout();
-    handleCloseMenu();
-    navigate('/');
-  };
-  
-  // Manipulador para ir para a página de login
-  const handleLogin = () => {
-    navigate('/login');
-  };
-  
-  // Função para obter as iniciais do nome do usuário
-  const getUserInitials = () => {
-    if (!currentUser || !currentUser.name) return '?';
-    
-    const names = currentUser.name.split(' ');
-    if (names.length === 1) return names[0][0].toUpperCase();
-    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
-  };
   
   return (
     <StyledAppBar position="static">
@@ -108,7 +57,6 @@ const Header = () => {
           {/* Links de navegação */}
           <Box sx={{ 
             flexGrow: 1, 
-            display: 'flex', 
             justifyContent: 'center',
             display: { xs: 'none', md: 'flex' } 
           }}>
@@ -141,57 +89,9 @@ const Header = () => {
             </NavButton>
           </Box>
 
-          {/* Área do usuário */}
+          {/* Área do usuário - removida temporariamente */}
           <Box sx={{ flexGrow: 0 }}>
-            {isAuthenticated ? (
-              <>
-                <IconButton onClick={handleOpenMenu} sx={{ p: 0 }}>
-                  <UserAvatar>{getUserInitials()}</UserAvatar>
-                </IconButton>
-                
-                <Menu
-                  anchorEl={anchorEl}
-                  open={open}
-                  onClose={handleCloseMenu}
-                  PaperProps={{
-                    elevation: 3,
-                    sx: { minWidth: 180 }
-                  }}
-                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                >
-                  <Box sx={{ px: 2, py: 1, textAlign: 'center' }}>
-                    <Typography variant="subtitle1">{currentUser?.name}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {currentUser?.email}
-                    </Typography>
-                  </Box>
-                  
-                  <Divider sx={{ my: 1 }} />
-                  
-                  <MenuItem onClick={() => { handleCloseMenu(); navigate('/profile'); }}>
-                    <ListItemIcon>
-                      <PersonIcon fontSize="small" />
-                    </ListItemIcon>
-                    Meu Perfil
-                  </MenuItem>
-                  
-                  <MenuItem onClick={handleLogout}>
-                    <ListItemIcon>
-                      <LogoutIcon fontSize="small" />
-                    </ListItemIcon>
-                    Sair
-                  </MenuItem>
-                </Menu>
-              </>
-            ) : (
-              <NavButton 
-                startIcon={<AccountCircleIcon />}
-                onClick={handleLogin}
-              >
-                Entrar
-              </NavButton>
-            )}
+            {/* Botões de autenticação removidos para acesso sem autenticação */}
           </Box>
         </Toolbar>
       </Container>
