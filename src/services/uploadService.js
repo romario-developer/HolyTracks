@@ -97,28 +97,71 @@ export const uploadTrack = async (songId, file, trackInfo = {}) => {
 };
 
 // Upload multiple tracks at once
-export const uploadMultipleTracks = async (songId, files, tracksInfo = []) => {
+export const uploadMultipleTracks = async (files, songId, config = {}) => {
   try {
-    const formData = new FormData();
-    formData.append('songId', songId);
+    // Verificar se files é um array válido 
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      throw new Error('Nenhum arquivo válido fornecido para upload');
+    }
     
-    // Append each file
+    const formData = new FormData();
+    
+    // Verificar se songId existe 
+    if (songId) {
+      formData.append('songId', songId);
+    }
+    
+    // Append each file 
     files.forEach((file, index) => {
       formData.append(`files[${index}]`, file);
     });
     
-    // Append track info if available
-    if (tracksInfo.length > 0) {
-      formData.append('tracksInfo', JSON.stringify(tracksInfo));
+    // Simular uma resposta de sucesso (para desenvolvimento) 
+    // Remova este bloco quando a API estiver pronta 
+    if (process.env.NODE_ENV === 'development') {
+      // Simular progresso de upload 
+      if (config.onUploadProgress) {
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 10;
+          config.onUploadProgress({ loaded: progress, total: 100 });
+          if (progress >= 100) {
+            clearInterval(interval);
+          }
+        }, 300);
+      }
+      
+      // Retornar dados simulados 
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve({
+            success: true,
+            data: {
+              tracks: files.map((file, index) => ({
+                id: `track_${index}_${Date.now()}`,
+                name: file.name.replace(/\.[^/.]+$/, ""),
+                type: 'unknown',
+                path: `/uploads/tracks/${file.name}`,
+                size: file.size
+              }))
+            }
+          });
+        }, 2000);
+      });
     }
-
+    
+    // Verificar se UPLOAD_API_URL está definido
+    const UPLOAD_API_URL = process.env.REACT_APP_UPLOAD_API_URL || '/api/upload';
+    
+    // Versão real usando fetch ou axios 
     const response = await fetch(`${UPLOAD_API_URL}/tracks/multiple`, {
       method: 'POST',
       body: formData,
+      ...config
     });
 
     if (!response.ok) {
-      throw new Error('Failed to upload multiple tracks');
+      throw new Error('Falha ao fazer upload múltiplo');
     }
     
     return await response.json();

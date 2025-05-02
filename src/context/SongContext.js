@@ -251,35 +251,47 @@ export const SongProvider = ({ children }) => {
   };
 
   // Função para fazer upload de múltiplas tracks
-  const uploadMultipleSongTracks = async (files, songId) => {
-    try {
-      setUploadProgress(0);
-      setUploadComplete(false);
-      setError(null);
+  const uploadMultipleSongTracks = async (files, songId) => { 
+    try { 
+      setUploadProgress(0); 
+      setUploadComplete(false); 
+      setError(null); 
       
-      // Configurar para monitorar o progresso do upload
-      const onUploadProgress = (progressEvent) => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        setUploadProgress(percentCompleted);
-      };
+      // Verificar se files existe e é um array 
+      if (!files || !Array.isArray(files) || files.length === 0) { 
+        setError('Nenhum arquivo selecionado para upload'); 
+        return { success: false, message: 'Nenhum arquivo selecionado' }; 
+      } 
       
-      // Adicionar opção de progresso ao objeto config
-      const config = { onUploadProgress };
+      // Configurar para monitorar o progresso do upload 
+      const onUploadProgress = (progressEvent) => { 
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total); 
+        setUploadProgress(percentCompleted); 
+      }; 
       
-      const response = await uploadMultipleTracks(files, songId, config);
-      setUploadComplete(true);
+      // Adicionar opção de progresso ao objeto config 
+      const config = { onUploadProgress }; 
       
-      // Se a música atual for a que recebeu as novas tracks, atualizar
-      if (currentSong._id === songId) {
-        await loadSong(songId);
+      // Verificar se songId existe antes de prosseguir
+      if (!songId) {
+        setError('ID da música não fornecido');
+        return { success: false, message: 'ID da música não fornecido' };
       }
       
-      return response.data;
-    } catch (err) {
-      setError(err.message || 'Erro ao fazer upload múltiplo');
-      console.error('Erro ao fazer upload múltiplo:', err);
-      throw err;
-    }
+      const response = await uploadMultipleTracks(files, songId, config); 
+      setUploadComplete(true); 
+      
+      // Verificar se currentSong e currentSong._id existem antes de comparar
+      if (currentSong && currentSong._id === songId) { 
+        await loadSong(songId); 
+      } 
+      
+      return response; 
+    } catch (err) { 
+      setError(err.message || 'Erro ao fazer upload múltiplo'); 
+      console.error('Erro ao fazer upload múltiplo:', err); 
+      throw err; 
+    } 
   };
 
   // Função para excluir uma track

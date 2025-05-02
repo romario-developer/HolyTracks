@@ -1,12 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const songController = require('../controllers/songController');
+const { 
+  getAllSongs, 
+  getSongById, 
+  createSong, 
+  updateSong, 
+  deleteSong 
+} = require('../controllers/songController');
+const { protect, authorize } = require('../middleware/auth');
 
-// Rotas para músicas
-router.get('/', songController.getAllSongs);
-router.post('/', songController.createSong);
-router.get('/:id', songController.getSongById);
-router.put('/:id', songController.updateSong);
-router.delete('/:id', songController.deleteSong);
+// Rotas públicas 
+router.get('/', getAllSongs); 
+router.get('/:id', getSongById); 
+
+// Rotas protegidas 
+router.post('/', protect, createSong); 
+router.put('/:id', protect, updateSong); 
+router.delete('/:id', protect, deleteSong); 
 
 module.exports = router;
