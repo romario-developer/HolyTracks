@@ -1,81 +1,79 @@
 const mongoose = require('mongoose');
 
+const TrackSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Por favor, adicione um nome para a faixa']
+  },
+  type: {
+    type: String,
+    enum: ['audio', 'sheet', 'lyrics', 'other'],
+    default: 'audio'
+  },
+  path: {
+    type: String,
+    required: [true, 'Por favor, adicione um caminho para a faixa']
+  },
+  size: {
+    type: Number,
+    required: [true, 'Por favor, adicione um tamanho para a faixa']
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 const SongSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'Por favor, informe o título da música'],
-    trim: true
+    required: [true, 'Por favor, adicione um título para a música'],
+    trim: true,
+    maxlength: [100, 'O título não pode ter mais de 100 caracteres']
+  },
+  artist: {
+    type: String,
+    required: false,
+    trim: true,
+    maxlength: [100, 'O nome do artista não pode ter mais de 100 caracteres']
   },
   key: {
     type: String,
-    required: false
+    required: false,
+    trim: true,
+    maxlength: [10, 'A tonalidade não pode ter mais de 10 caracteres']
   },
   bpm: {
     type: Number,
+    required: false,
+    min: [0, 'O BPM não pode ser negativo']
+  },
+  category: {
+    type: String,
+    required: false,
+    enum: [
+      'Entrada',
+      'Ato Penitencial',
+      'Glória',
+      'Aclamação',
+      'Ofertório',
+      'Santo',
+      'Comunhão',
+      'Ação de Graças',
+      'Final',
+      'Outro'
+    ]
+  },
+  description: {
+    type: String,
+    required: false,
+    maxlength: [500, 'A descrição não pode ter mais de 500 caracteres']
+  },
+  tags: {
+    type: [String],
     required: false
   },
-  timeSignature: {
-    type: String,
-    required: false
-  },
-  tempo: {
-    type: String,
-    enum: ['comum', 'quaresma', 'pascoa', 'advento', 'natal'],
-    default: 'comum'
-  },
-  notes: {
-    type: String,
-    required: false
-  },
-  isPublic: {
-    type: Boolean,
-    default: false
-  },
-  tracks: [
-    {
-      name: {
-        type: String,
-        required: true
-      },
-      type: {
-        type: String,
-        enum: ['drums', 'bass', 'guitar', 'acoustic', 'keys', 'pads', 'fx', 'vocals'],
-        required: true
-      },
-      path: {
-        type: String,
-        required: true
-      },
-      volume: {
-        type: Number,
-        default: 80
-      },
-      muted: {
-        type: Boolean,
-        default: false
-      },
-      solo: {
-        type: Boolean,
-        default: false
-      }
-    }
-  ],
-  markers: [
-    {
-      time: {
-        type: Number,
-        required: true
-      },
-      label: {
-        type: String,
-        required: true
-      },
-      color: {
-        type: String,
-        default: '#2196F3'
-      }
-    }
-  ],
+  tracks: [TrackSchema],
   user: {
     type: mongoose.Schema.ObjectId,
     ref: 'User',

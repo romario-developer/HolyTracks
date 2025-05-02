@@ -1,17 +1,19 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// Middleware para proteger rotas
+// Proteger rotas
 exports.protect = async (req, res, next) => {
   let token;
 
-  // Verificar se o token está no header Authorization
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
-    // Extrair token do header
+    // Obter token do header
     token = req.headers.authorization.split(' ')[1];
+  } else if (req.cookies && req.cookies.token) {
+    // Obter token dos cookies
+    token = req.cookies.token;
   }
 
   // Verificar se o token existe
@@ -26,7 +28,7 @@ exports.protect = async (req, res, next) => {
     // Verificar token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Adicionar usuário à requisição
+    // Obter usuário do token
     req.user = await User.findById(decoded.id);
 
     next();
@@ -38,13 +40,13 @@ exports.protect = async (req, res, next) => {
   }
 };
 
-// Middleware para verificar funções/permissões
+// Autorizar por papel
 exports.authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        error: `Função ${req.user.role} não tem permissão para acessar esta rota`
+        error: `Papel ${req.user.role} não está autorizado a acessar esta rota`
       });
     }
     next();

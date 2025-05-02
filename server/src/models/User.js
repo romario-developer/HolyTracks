@@ -5,20 +5,20 @@ const jwt = require('jsonwebtoken');
 const UserSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Por favor, informe seu nome']
+    required: [true, 'Por favor, adicione um nome']
   },
   email: {
     type: String,
-    required: [true, 'Por favor, informe seu email'],
+    required: [true, 'Por favor, adicione um email'],
     unique: true,
     match: [
       /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-      'Por favor, informe um email válido'
+      'Por favor, adicione um email válido'
     ]
   },
   password: {
     type: String,
-    required: [true, 'Por favor, informe uma senha'],
+    required: [true, 'Por favor, adicione uma senha'],
     minlength: 6,
     select: false
   },
@@ -33,7 +33,7 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-// Criptografar senha antes de salvar
+// Criptografar senha usando bcrypt
 UserSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
     next();
@@ -43,7 +43,7 @@ UserSchema.pre('save', async function(next) {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// Método para gerar JWT
+// Assinar JWT
 UserSchema.methods.getSignedJwtToken = function() {
   return jwt.sign(
     { id: this._id },
@@ -52,7 +52,7 @@ UserSchema.methods.getSignedJwtToken = function() {
   );
 };
 
-// Método para verificar senha
+// Verificar se a senha informada corresponde à senha criptografada
 UserSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
